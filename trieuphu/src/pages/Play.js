@@ -11,8 +11,8 @@ import { calcPrize, calcAudience, pickRandom } from '../utils';
 const Game = ({ questions, playerName, onFinish }) => {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
-  const [status, setStatus] = useState('answering'); // answering -> locked -> revealed
-  const [selected, setSelected] = useState(null); // -1 = hết giờ
+  const [status, setStatus] = useState('answering'); 
+  const [selected, setSelected] = useState(null); 
   const [seconds, setSeconds] = useState(TIME_PER_QUESTION);
   const [hidden, setHidden] = useState([]);
   const [audience, setAudience] = useState(null);
