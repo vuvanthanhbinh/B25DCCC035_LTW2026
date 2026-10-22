@@ -1,0 +1,35 @@
+body { margin: 0; font-family: system-ui, sans-serif; background: #f4f6fb; color: #1b2340; }
+.navbar { display: flex; gap: 20px; padding: 14px 24px; background: #1b2340; }
+.nav-link { color: #cfd6f0; text-decoration: none; }
+.nav-link.active { color: #ff4d4d; font-weight: bold; }
+.container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+button { padding: 8px 14px; cursor: pointer; }
+input, select { padding: 6px; }
+table { border-collapse: collapse; margin-top: 12px; width: 100%; background: #fff; }
+th, td { border: 1px solid #d5daea; padding: 8px; text-align: left; }
+.record { font-weight: bold; color: #b8860b; }
+.options { list-style: none; padding: 0; }
+.options li { padding: 8px 12px; margin: 6px 0; border-radius: 6px; background: #fff; }
+.options li.correct-bg { background: #a5e6b5; }
+
+.play { display: flex; gap: 24px; align-items: flex-start; }
+.play-main { flex: 1; }
+.timer { font-size: 20px; font-weight: bold; }
+.timer.danger { color: #d93025; }
+.question-card { background: #1b2340; color: #fff; padding: 20px; border-radius: 10px; }
+.q-number { margin: 0; color: #9fb0ff; }
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.answer { padding: 14px; text-align: left; border: 2px solid #5a6bb5; border-radius: 24px; background: #26306a; color: #fff; font-size: 16px; }
+.answer:disabled { cursor: default; }
+.answer.selected { background: #f59e0b; border-color: #f59e0b; color: #000; }
+.answer.correct { background: #22a559; border-color: #22a559; }
+.answer.wrong { background: #d93025; border-color: #d93025; }
+.answer.is-hidden { visibility: hidden; }
+.lifelines { display: flex; gap: 10px; margin: 14px 0; }
+.ladder { list-style: none; margin: 0; padding: 10px; background: #fff; border-radius: 10px; min-width: 180px; }
+.ladder li { padding: 4px 8px; border-radius: 4px; }
+.ladder li.milestone { font-weight: bold; }
+.ladder li.current { background: #f59e0b; }
+.audience { background: #fff; padding: 10px 14px; border-radius: 8px; }
+.aud-row { margin: 6px 0; }
+.aud-bar { height: 16px; background: #4c6fff; border-radius: 3px; }
