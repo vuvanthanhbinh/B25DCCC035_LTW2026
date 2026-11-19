@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import './index.css';
-import { SEMESTERS, formatPoint } from './data';
-import { calcStats, getGrade } from './utils';
+import { GRADES, SEMESTERS } from './data';
+import { getGrade, calcStats } from './utils';
 import useFetch from './hooks/useFetch';
+import useDebounce from './hooks/useDebounce';
+import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './context/ThemeContext';
 import { useNotice } from './context/NoticeContext';
 import { removeCourse, selectCourses, setCourses, setScore } from './features/coursesSlice';
+import { hasSaved } from './store';
+import CourseRow from './components/CourseRow';
 import AddCourseForm from './components/AddCourseForm';
 import GoalPlanner from './components/GoalPlanner';
 
@@ -18,27 +22,74 @@ const App = () => {
   const { theme, toggleTheme } = useTheme();
   const { showNotice } = useNotice();
   const { data, loading, error } = useFetch('/data/courses.json');
-  const [semester, setSemester] = useState('all');
+  const [semester, setSemester] = useLocalStorage('ltw_sodiem_semester', 'all');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+  const searchRef = useRef(null);
 
   useEffect(() => {
-    if (data) dispatch(setCourses(data));
+    if (!hasSaved && data) dispatch(setCourses(data));
   }, [data, dispatch]);
+
+  const handleKey = useCallback((e) => {
+    if (e.key === '/') {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag)) return;
+      e.preventDefault();
+      if (searchRef.current) searchRef.current.focus();
+    } else if (e.key === 'Escape' && document.activeElement === searchRef.current) {
+      setSearch('');
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleKey]);
 
   const viewCourses = useMemo(
     () => (semester === 'all' ? courses : courses.filter((c) => c.semester === semester)),
     [courses, semester]
   );
+  const shown = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    if (q === '') return viewCourses;
+    return viewCourses.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    );
+  }, [viewCourses, debouncedSearch]);
+
   const stats = useMemo(() => calcStats(viewCourses), [viewCourses]);
   const allStats = useMemo(() => calcStats(courses), [courses]);
+  const distribution = useMemo(() => {
+    const counts = viewCourses.reduce((acc, c) => {
+      const letter = getGrade(c.score).letter;
+      return { ...acc, [letter]: (acc[letter] || 0) + 1 };
+    }, {});
+    return GRADES.map((g) => ({ letter: g.letter, count: counts[g.letter] || 0 }));
+  }, [viewCourses]);
 
-  const handleScore = (id, e) => {
-    const v = e.target.valueAsNumber;
-    if (v >= 0 && v <= 10) dispatch(setScore({ id, score: v }));
+  useEffect(() => {
+    document.title = allStats.count > 0 ? `GPA ${allStats.gpa.toFixed(2)} – Sổ điểm` : 'Sổ điểm';
+  }, [allStats]);
+
+  const handleScore = useCallback((id, score) => dispatch(setScore({ id, score })), [dispatch]);
+  const handleRemove = useCallback(
+    (course) => {
+      dispatch(removeCourse(course.id));
+      showNotice(`Đã xóa môn ${course.name}`);
+    },
+    [dispatch, showNotice]
+  );
+  const handleReset = () => {
+    if (!data) return;
+    dispatch(setCourses(data));
+    showNotice('Đã đặt lại dữ liệu mẫu');
   };
-  const handleRemove = (course) => {
-    dispatch(removeCourse(course.id));
-    showNotice(`Đã xóa môn ${course.name}`);
-  };
+  const handleCourseShift = (e) => setSearch(e.target.value);
+
+  const showLoading = !hasSaved && loading;
+  const showError = !hasSaved && error;
 
   return (
     <div className={`app ${theme}`} data-build={BUILD_TAG}>
@@ -51,9 +102,9 @@ const App = () => {
 
       <section>
         <h2>Thống kê</h2>
-        {loading ? (
+        {showLoading ? (
           <p>Đang tải bảng điểm...</p>
-        ) : error ? (
+        ) : showError ? (
           <p>Không tải được bảng điểm</p>
         ) : (
           <>
@@ -62,6 +113,15 @@ const App = () => {
             <p>GPA (hệ 4): {stats.gpa.toFixed(2)}</p>
             <p>Xếp loại: {stats.rank}</p>
             <p>GPA tích lũy: {allStats.gpa.toFixed(2)}</p>
+            <h3>Phân bố điểm chữ</h3>
+            <ul>
+              {distribution.map((d) => (
+                <li key={d.letter}>
+                  {d.letter}: {d.count}{' '}
+                  <span className="bar" style={{ width: 24 * d.count }} />
+                </li>
+              ))}
+            </ul>
           </>
         )}
       </section>
@@ -74,10 +134,13 @@ const App = () => {
           {SEMESTERS.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
-        </select>
-        {loading ? (
+        </select>{' '}
+        <label htmlFor="search">Tìm môn học</label>
+        <input id="search" type="text" ref={searchRef} value={search} onChange={handleCourseShift} />
+        <p>Tìm thấy {shown.length} môn</p>
+        {showLoading ? (
           <p>Đang tải bảng điểm...</p>
-        ) : error ? (
+        ) : showError ? (
           <p>Không tải được bảng điểm</p>
         ) : courses.length === 0 ? (
           <p>Chưa có môn học nào</p>
@@ -92,41 +155,20 @@ const App = () => {
                 <th>Điểm (hệ 10)</th>
                 <th>Điểm chữ</th>
                 <th>Điểm (hệ 4)</th>
+                <th>Số lần render</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {viewCourses.map((c) => {
-                const grade = getGrade(c.score);
-                const failed = grade.letter === 'F';
-                return (
-                  <tr key={c.id} style={failed ? { color: '#c62828' } : undefined}>
-                    <td>{c.code}</td>
-                    <td>{c.name}</td>
-                    <td>{c.credits}</td>
-                    <td>{c.semester}</td>
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        max="10"
-                        step="0.1"
-                        aria-label={`Điểm ${c.name}`}
-                        value={c.score}
-                        onChange={(e) => handleScore(c.id, e)}
-                      />
-                    </td>
-                    <td>{failed ? 'F – Học lại' : grade.letter}</td>
-                    <td>{formatPoint(grade.point)}</td>
-                    <td>
-                      <button type="button" onClick={() => handleRemove(c)}>Xóa</button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {shown.map((c) => (
+                <CourseRow key={c.id} course={c} onScore={handleScore} onRemove={handleRemove} />
+              ))}
             </tbody>
           </table>
         )}
+        <p>
+          <button type="button" onClick={handleReset}>Đặt lại dữ liệu mẫu</button>
+        </p>
       </section>
 
       <section>
