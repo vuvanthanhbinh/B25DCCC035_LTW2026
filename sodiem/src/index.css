@@ -1,0 +1,14 @@
+body { margin: 0; font-family: system-ui, sans-serif; }
+.app { min-height: 100vh; padding: 16px 24px; box-sizing: border-box; }
+.app.light { background: #ffffff; color: #18212c; }
+.app.dark { background: #1f2430; color: #e8eaf0; }
+.app.dark input, .app.dark select { background: #2b3140; color: #e8eaf0; border: 1px solid #555; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #8884; padding: 6px 8px; text-align: left; }
+td input { width: 70px; }
+.add-form { display: grid; gap: 10px; max-width: 360px; }
+.add-form label { display: block; }
+.error { color: #c62828; font-size: 14px; }
+.bar { display: inline-block; height: 10px; background: #1976d2; vertical-align: middle; }
+.notice { position: fixed; top: 8px; right: 8px; z-index: 10; background: #2e7d32; color: #fff; padding: 8px 14px; border-radius: 4px; }
+ul { list-style: none; padding: 0; }
