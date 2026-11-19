@@ -15,7 +15,7 @@ export const GRADES = [
   { min: 0, letter: 'F', point: 0 },
 ];
 
-// Xếp loại theo GPA (hệ 4), cũng lấy mục đầu tiên có gpa >= min
+
 export const RANKS = [
   { min: 3.6, title: 'Xuất sắc' },
   { min: 3.2, title: 'Giỏi' },
