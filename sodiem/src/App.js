@@ -4,7 +4,7 @@ import { CREDIT_OPTIONS, SEMESTERS, formatPoint } from './data';
 import { calcStats, getGrade } from './utils';
 import useFetch from './hooks/useFetch';
 import coursesReducer from './coursesReducer';
-//không làm gì cả , em note đây để commit lại
+
 const BUILD_TAG = "gp-4073";
 
 const EMPTY = { code: '', name: '', credits: '3', semester: SEMESTERS[0], score: '' };
